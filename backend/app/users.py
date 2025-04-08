@@ -1,6 +1,9 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from flask_cors import CORS
-import datetime
+from datetime import datetime
+
+# importing database collections from app
+from database import users_collection
 
 # Flask Blueprint
 users_bp = Blueprint("users", __name__)
@@ -13,16 +16,34 @@ def login():
     data = request.json
     email = data.get("email")
 
-    print(f"Login attempt with email: {email}")
-
     if not email.endswith("@psgtech.ac.in"):
         return jsonify({"error": "Only Official emails are allowed"}), 403
 
     uid = email.split("@")[0]
-    session["user"] = {"email": email, "uid": uid}
+    existing_user = users_collection.find_one({'email':email})
+    if existing_user:
+        last_feedback = existing_user.get('last_feedback')
+        if last_feedback:
+            day_since_feedback = (datetime.utcnow()-last_feedback).days
+            if day_since_feedback < 30:
+                return jsonify({
+                    "error":"Feedback already submitted","message":f"Please wait {30-day_since_feedback} days before submitted new feedback"
+                })
+        users_collection.update_one({"email":email},
+                                    {"$set":{"last_login":datetime.utcnow()}})
+    else:
+        user_data = {
+            "email":email,
+            "roll_no":uid.lower(),
+            "last_feedback":None,
+            "last_login":datetime.utcnow()
+        }
+        users_collection.insert_one(user_data)
+
+    session["email"] = email
+    session['roll_no'] = uid
 
     return jsonify({"message": "Login successful", "email": email})
-
 
 
 
@@ -32,12 +53,20 @@ def submit_feedback():
     if "user" not in session:
         return jsonify({"error": "Unauthorized"}), 403
 
-    email = session["user"]["email"]
-    uid = session["user"]["uid"]
+    email = session["email"]
+    uid = session["roll_no"]
     feedback_data = request.json.get("answers")
 
     if not feedback_data or len(feedback_data) != 10:
         return jsonify({"error": "Invalid feedback format"}), 400
+
+    users_collection.update_one(
+        {"email": email},
+        {"$set": {
+            "last_feedback": datetime.utcnow(),
+            "latest_feedback": feedback_data
+        }}
+    )
 
     return jsonify({"message": "Feedback submitted successfully"})
 
@@ -49,7 +78,8 @@ def submit_feedback():
 
 @users_bp.route("/logout", methods=["POST"])
 def logout():
-    session.pop("user", None)
+    session.pop("email", None)
+    session.pop("roll_no",None)
     return jsonify({"message": "Logged out successfully"})
 
 
