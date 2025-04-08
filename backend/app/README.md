@@ -10,4 +10,5 @@ pip install -r requirements.txt
 
 ```
 FLASK_SECRET_KEY = "<some_text>"
+MONGO_URI = ""
 ```

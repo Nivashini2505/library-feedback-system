@@ -4,6 +4,8 @@ from admin import admin_bp
 import dotenv
 import os
 
+dotenv.load_dotenv()
+
 # Initialize Flask App
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
