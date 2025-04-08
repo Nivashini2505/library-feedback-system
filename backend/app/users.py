@@ -13,19 +13,18 @@ def login():
     data = request.json
     email = data.get("email")
 
-    if not email or not email.endswith("@psgtech.ac.in"):
-        return jsonify({"error": "Only official emails are allowed"}), 403
+    print(f"Login attempt with email: {email}")
 
-    try:
-        uid = email.split("@")[0]
-        session["user"] = {"email": email, "uid": uid}
+    if not email.endswith("@psgtech.ac.in"):
+        return jsonify({"error": "Only Official emails are allowed"}), 403
 
-        # TODO: Check if the user has already submitted feedback in the past 30 days
-        # Implement check_spam_feedback() from db_func.py, else return error message
+    uid = email.split("@")[0]
+    session["user"] = {"email": email, "uid": uid}
 
-        return jsonify({"message": "Login successful", "email": email})
-    except Exception as e:
-        return jsonify({"error": "Invalid credentials", "details": str(e)}), 401
+    return jsonify({"message": "Login successful", "email": email})
+
+
+
 
 
 @users_bp.route("/submit_feedback", methods=["POST"])
