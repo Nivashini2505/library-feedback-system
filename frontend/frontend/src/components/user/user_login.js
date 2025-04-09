@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function UserLogin() {
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
   const handleLoginSuccess = async (credentialResponse) => {
     const decoded = jwtDecode(credentialResponse.credential);
     const userEmail = decoded.email;
 
     if (!userEmail.endsWith('@psgtech.ac.in')) {
-      alert("Access restricted to @psgtech.ac.in email addresses.");
+      setError("Access restricted to @psgtech.ac.in email addresses.");
       return;
     }
 
@@ -21,22 +25,40 @@ function UserLogin() {
 
       if (response.status === 200) {
         console.log("Login successful:", response.data);
-        window.location.href = "/user/user_dashboard";
-      } else {
-        alert("Login failed on backend.");
+        navigate("/user/user_dashboard");
       }
     } catch (err) {
       console.error("Backend error:", err);
-      alert("Login failed. Please try again.");
+      
+      // Handle the specific error case for already submitted feedback
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || err.response.data.error);
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h2>User Login</h2>
+      
+      {/* Error message display */}
+      {error && (
+        <div className="error-message" style={{
+          color: 'red',
+          padding: '10px',
+          marginBottom: '20px',
+          borderRadius: '4px',
+          backgroundColor: '#ffebee'
+        }}>
+          {error}
+        </div>
+      )}
+      
       <GoogleLogin 
         onSuccess={handleLoginSuccess} 
-        onError={() => alert("Login Failed")} 
+        onError={() => setError("Login Failed")} 
       />
     </div>
   );
