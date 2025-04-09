@@ -4,6 +4,7 @@ from datetime import datetime
 
 # importing database collections from app
 from database import users_collection
+from database import user_logs_collection
 
 # Flask Blueprint
 users_bp = Blueprint("users", __name__)
@@ -21,24 +22,34 @@ def login():
 
     uid = email.split("@")[0]
     existing_user = users_collection.find_one({'email':email, "role":"user"})
-    if existing_user:
-        last_feedback = existing_user.get('last_feedback')
-        if last_feedback:
-            day_since_feedback = (datetime.utcnow()-last_feedback).days
-            if day_since_feedback < 30:
-                return jsonify({
-                    "error":"Feedback already submitted","message":f"Please wait {30-day_since_feedback} days before submitted new feedback"
-                }), 403
-        users_collection.update_one({"email":email},
-                                    {"$set":{"last_login":datetime.utcnow()}})
-    else:
-        user_data = {
-            "email":email,
-            "roll_no":uid.lower(),
-            "last_feedback":None,
-            "last_login":datetime.utcnow()
-        }
-        users_collection.insert_one(user_data)
+
+    try:
+        if existing_user:
+            last_feedback = existing_user.get('last_feedback')
+            if last_feedback:
+                day_since_feedback = (datetime.utcnow()-last_feedback).days
+                if day_since_feedback < 30:
+                    return jsonify({
+                        "error":"Feedback already submitted","message":f"Please wait {30-day_since_feedback} days before submitted new feedback"
+                    }), 403
+            users_collection.update_one({"email":email},
+                                        {"$set":{"last_login":datetime.utcnow()}})
+        else:
+            user_data = {
+                "email":email,
+                "roll_no":uid.lower(),
+                "last_feedback":None,
+                "last_login":datetime.utcnow()
+            }
+            users_collection.insert_one(user_data)
+    except Exception as e:
+        print(f"[-] Error: {e} : {uid} : user/login/login section")
+    
+    try:
+        log_entry = {"roll_no": uid,"date": datetime.utcnow()}
+        user_logs_collection.insert_one(log_entry)
+    except Exception as e:
+        print(f"[-] Error: {e} : {uid} : in user/login/logs section")
 
     session["email"] = email
     session['roll_no'] = uid
@@ -76,6 +87,7 @@ def submit_feedback():
 
 
 
+
 @users_bp.route("/logout", methods=["POST"])
 def logout():
     session.pop("email", None)
@@ -85,5 +97,5 @@ def logout():
 
 
 # TODO: get the feedback and process it and store them in the database
-# TODO: send the mail to users regarding the feedback submitssion (and issue if any)
+# TODO: send the mail to users regarding the feedback submitssion (and with issue if any)
 

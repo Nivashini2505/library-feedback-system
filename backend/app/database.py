@@ -13,3 +13,4 @@ except Exception as e:
 
 # Collections
 users_collection = db.users
+user_logs_collection = db.logs
