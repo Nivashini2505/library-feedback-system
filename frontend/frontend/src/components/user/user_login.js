@@ -25,7 +25,7 @@ function UserLogin() {
 
       if (response.status === 200) {
         console.log("Login successful:", response.data);
-        navigate("/user/user_dashboard");
+        navigate("/feedback_entry");
       }
     } catch (err) {
       console.error("Backend error:", err);
