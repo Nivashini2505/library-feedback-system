@@ -20,7 +20,7 @@ def login():
         return jsonify({"error": "Only Official emails are allowed"}), 403
 
     uid = email.split("@")[0]
-    existing_user = users_collection.find_one({'email':email})
+    existing_user = users_collection.find_one({'email':email, "role":"user"})
     if existing_user:
         last_feedback = existing_user.get('last_feedback')
         if last_feedback:
@@ -84,6 +84,6 @@ def logout():
 
 
 
-@users_bp.route("/test", methods=["GET"])
-def test():
-    return jsonify({"message": "API is working!"})
+# TODO: get the feedback and process it and store them in the database
+# TODO: send the mail to users regarding the feedback submitssion (and issue if any)
+

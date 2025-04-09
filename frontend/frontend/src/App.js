@@ -13,10 +13,11 @@
     return (
       <Router>
         <Routes>
-          <Route path="/" element={<UserLogin />} />
           <Route path="/admin" element={<AdminLogin />} />
-          <Route path="./components/admin/admin_dashboard'" element={<AdminDashboard />} />
-          <Route path="./components/user/user_dashboard" element={<UserDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+          <Route path="/" element={<UserLogin />} />
+          <Route path="/faadback_entry" element={<UserDashboard />} />
         </Routes>
       </Router>
     );
