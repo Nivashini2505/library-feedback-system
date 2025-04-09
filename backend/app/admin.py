@@ -28,5 +28,6 @@ def test(name):
 
 @admin_bp.route("/logout", methods=["POST"])
 def logout():
-    session.pop("user", None)
+    session.pop("email", None)
+    session.pop("roll_no", None)
     return jsonify({"message": "Logged out successfully"})

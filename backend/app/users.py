@@ -28,7 +28,7 @@ def login():
             if day_since_feedback < 30:
                 return jsonify({
                     "error":"Feedback already submitted","message":f"Please wait {30-day_since_feedback} days before submitted new feedback"
-                })
+                }), 403
         users_collection.update_one({"email":email},
                                     {"$set":{"last_login":datetime.utcnow()}})
     else:
