@@ -1,0 +1,22 @@
+- submissions
+    - display all the latest submissions
+    - add a set of search options like search with feedback_id, roll_no, issues, date (from, to), conclusions
+
+- AASA pipeline (pipeline.py)
+    - data cleaning and study
+    - setup preprocessing layer
+
+- Analytics page
+    - feedback submission trend
+    - common issues (open seperate collection for this)
+    - feedback submitted with score (feedback_id, roll_no, feedback, score, AI conclusion)
+    - issue votes (if same issue quoted by many - plot a pie chart for issues)
+
+- Reports
+    - select date range for generating Reports
+        - set download options
+            - structure output data accordingly
+        - select a general .pdf template for generating Reports
+            - month wise issues
+            - issue status
+            - feedback count

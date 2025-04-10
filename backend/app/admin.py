@@ -125,6 +125,10 @@ def combined_count():
 
 
 
+
+
+
+
 @admin_bp.route("/get_feedback_questions", methods=["GET"])
 def get_feedback_questions():
     questions = questions_collection.find({}, {"_id": 1, "question": 1, "options": 1})

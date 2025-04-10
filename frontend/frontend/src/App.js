@@ -7,7 +7,7 @@
   import FeedbackManagement from './components/admin/AdminQuestions';
   
   import UserLogin from './components/user/user_login';
-  import UserDashboard from './components/user/user_dashboard';
+  import LibraryFeedbackForm from './components/user/UserFeedback';
     
 
   function App() {
@@ -19,7 +19,7 @@
           <Route path="/admin/questions" element={<FeedbackManagement />} />
 
           <Route path="/" element={<UserLogin />} />
-          <Route path="/faadback_entry" element={<UserDashboard />} />
+          <Route path="/feedback_entry" element={<LibraryFeedbackForm />} />
         </Routes>
       </Router>
     );
