@@ -11,18 +11,18 @@ Chart.register(...registerables);
 function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [loginData, setLoginData] = useState([]);
-  const [period, setPeriod] = useState('weekly'); // Default period
+  const [data, setData] = useState({ login_count: 0, feedback_count: 0 });
+  const [days, setDays] = useState(1); // Default days
 
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await axios.get('http://localhost:5000/admin/check_session');
         if (!response.data.logged_in) {
-          navigate('/admin/login'); // Redirect to login if not logged in
+          navigate('/admin'); // Redirect to login if not logged in
         }
       } catch (error) {
-        navigate('/admin/login'); // Redirect to login on error
+        navigate('/admin'); // Redirect to login on error
       } finally {
         setLoading(false);
       }
@@ -32,31 +32,31 @@ function AdminDashboard() {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchLoginCount = async () => {
+    const fetchCombinedCount = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/admin/login_count?period=${period}`);
-        setLoginData(response.data);
+        const response = await axios.get(`http://localhost:5000/admin/combined_count?days=${days}`);
+        setData(response.data);
       } catch (err) {
-        console.error('Failed to fetch login counts:', err);
+        console.error('Failed to fetch combined counts:', err);
       }
     };
 
-    fetchLoginCount();
-  }, [period]);
+    fetchCombinedCount();
+  }, [days]);
 
   if (loading) {
     return <div>Loading...</div>; // Optional loading state
   }
 
-  // Prepare data for the chart
+  // Prepare data for the charts
   const chartData = {
-    labels: loginData.map(entry => entry.period), // Labels based on period (dates)
+    labels: ['Total Logins', 'Total Feedbacks'], // Labels for the chart
     datasets: [
       {
-        label: 'Total Logins',
-        data: loginData.map(entry => entry.login_count), // Corresponding login counts
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+        label: 'Submission rate',
+        data: [data.login_count, data.feedback_count], // Corresponding counts
+        backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
         borderWidth: 2,
         fill: false,
       },
@@ -68,19 +68,18 @@ function AdminDashboard() {
       <AdminNavbar />
       <h2 style={styles.title}>Admin Dashboard</h2>
       <div style={styles.selectContainer}>
-        <label htmlFor="period" style={styles.label}>Select Time Period: </label>
-        <select
-          id="period"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          style={styles.select}
-        >
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
+        <label htmlFor="days" style={styles.label}>Enter Number of Days: </label>
+        <input
+          type="number"
+          id="days"
+          value={days}
+          onChange={(e) => setDays(e.target.value)}
+          min="1"
+          style={styles.input}
+        />
       </div>
       <div style={styles.chartContainer}>
-        <h3 style={styles.chartTitle}>Login Count</h3>
+        <h3 style={styles.chartTitle}>Login and Feedback Count</h3>
         <Line
           data={chartData}
           options={{
@@ -91,7 +90,7 @@ function AdminDashboard() {
               },
               title: {
                 display: true,
-                text: 'Total Logins for Selected Period',
+                text: 'Total Logins and Feedbacks for Last X Days',
               },
             },
           }}
@@ -122,9 +121,10 @@ const styles = {
     marginRight: '10px',
     fontSize: '16px',
   },
-  select: {
+  input: {
     padding: '5px',
     fontSize: '16px',
+    width: '100px',
   },
   chartContainer: {
     width: '100%',

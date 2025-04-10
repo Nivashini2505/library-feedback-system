@@ -25,7 +25,7 @@ function AdminNavbar() {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        maxWidth: '1200px',
+        maxWidth: '100%',
         margin: '0 auto'
       }}>
         <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
@@ -43,8 +43,14 @@ function AdminNavbar() {
           <Link to="/admin/feedbacks" style={linkStyle}>
             Feedbacks
           </Link>
+          <Link to="/admin/analytics" style={linkStyle}>
+          Analytics
+          </Link>
           <Link to="/admin/reports" style={linkStyle}>
             Reports
+          </Link>
+          <Link to="/admin/questions" style={linkStyle}>
+            Questions
           </Link>
           <button
             onClick={handleLogout}

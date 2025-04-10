@@ -7,6 +7,8 @@ from flask_cors import CORS
 # importing database collections from app
 from database import users_collection
 from database import user_logs_collection
+from database import feedback_collection
+from database import questions_collection
 
 # Flask Blueprint
 admin_bp = Blueprint("admin", __name__)
@@ -55,81 +57,122 @@ def login():
     return jsonify({"message": "Login successful","email": username})
 
 
-@admin_bp.route("/login_count", methods=["GET"])
-def login_count():
-    time_period = request.args.get("period")  # Expected values: "weekly", "monthly"
-
-    if time_period not in ["weekly", "monthly"]:
-        return jsonify({"error": "Invalid time period. Use 'weekly' or 'monthly'."}), 400
-
-    now = datetime.datetime.utcnow()
-    start_date = None
-
-    if time_period == "weekly":
-        start_date = now - datetime.timedelta(days=7)  # Get data for the last 7 days
-    elif time_period == "monthly":
-        start_date = now - datetime.timedelta(days=365)  # Get data for the last 12 months
-
-    # Prepare the response
-    result = []
-
-    if time_period == "weekly":
-        # Group by day
-        login_counts = user_logs_collection.aggregate([
-            {"$match": {"date": {"$gte": start_date}}},
-            {
-                "$group": {
-                    "_id": {
-                        "day": {"$dayOfYear": "$date"},
-                        "year": {"$year": "$date"}
-                    },
-                    "login_count": {"$sum": 1}
-                }
-            },
-            {
-                "$sort": {"_id": 1}  # Sort by day and year
-            }
-        ])
-        
-        # Prepare the response for daily data
-        for day in range(7):  # Last 7 days
-            day_date = now - datetime.timedelta(days=day)
-            count = next((entry["login_count"] for entry in login_counts if entry["_id"]["day"] == day_date.timetuple().tm_yday and entry["_id"]["year"] == day_date.year), 0)
-            result.append({"period": day_date.strftime("%Y-%m-%d"), "login_count": count})
-
-    else:  # Monthly
-        # Group by week
-        login_counts = user_logs_collection.aggregate([
-            {"$match": {"date": {"$gte": start_date}}},
-            {
-                "$group": {
-                    "_id": {
-                        "week": {"$week": "$date"},
-                        "year": {"$year": "$date"}
-                    },
-                    "login_count": {"$sum": 1}
-                }
-            },
-            {
-                "$sort": {"_id": 1}  # Sort by week and year
-            }
-        ])
-        
-        # Prepare the response for weekly data
-        for week in range(1, 9):  # Last 8 weeks
-            week_date = now - datetime.timedelta(weeks=week)
-            count = next((entry["login_count"] for entry in login_counts if entry["_id"]["week"] == week_date.isocalendar()[1] and entry["_id"]["year"] == week_date.year), 0)
-            result.append({"period": f"Week {week}", "login_count": count})
-
-    return jsonify(result), 200
-
-
 @admin_bp.route("/check_session", methods=["GET"])
 def check_session():
     if "username" in session:
         return jsonify({"logged_in": True, "username": session["username"]})
     else:
         return jsonify({"logged_in": False}), 401
+
+
+@admin_bp.route("/combined_count", methods=["GET"])
+def combined_count():
+    days = int(request.args.get("days", 1))  # Get the integer value for the number of days
+
+    if days < 1:
+        return jsonify({"error": "Days must be a positive integer."}), 400
+
+    now = datetime.datetime.utcnow()
+    start_date = now - datetime.timedelta(days=days)  # Get data for the last 'days' days
+
+    # Get login count
+    login_counts = user_logs_collection.aggregate([
+        {"$match": {"date": {"$gte": start_date}}},
+        {
+            "$group": {
+                "_id": None,
+                "login_count": {"$sum": 1}
+            }
+        }
+    ])
+    login_count = next(login_counts, {}).get("login_count", 0)
+
+    # Get feedback count
+    feedback_counts = feedback_collection.aggregate([
+        {"$match": {"date": {"$gte": start_date}}},
+        {
+            "$group": {
+                "_id": None,
+                "feedback_count": {"$sum": 1}
+            }
+        }
+    ])
+    feedback_count = next(feedback_counts, {}).get("feedback_count", 0)
+
+    return jsonify({
+        "login_count": login_count,
+        "feedback_count": feedback_count
+    }), 200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@admin_bp.route("/get_feedback_questions", methods=["GET"])
+def get_feedback_questions():
+    questions = questions_collection.find({}, {"_id": 1, "question": 1, "options": 1})
+    feedback_questions = []
+    for question in questions:
+        print(question)
+        # Check if the required keys exist
+        if "question" in question and "options" in question:
+            feedback_questions.append({
+                "id": str(question["_id"]),
+                "question": question["question"],
+                "options": question["options"]
+            })
+        else:
+            # Log or handle the case where the expected keys are missing
+            print(f"Missing keys in question document: {question}")
+
+    return jsonify(feedback_questions), 200
+
+@admin_bp.route("/add_feedback_questions", methods=["POST"])
+def add_feedback_questions():
+    data = request.json
+    question = data.get("question")
+    options = data.get("options")  # Expecting an array of options
+
+    if not question or not options or len(options) != 5:
+        return jsonify({"error": "Question and exactly 5 options are required."}), 400
+
+    questions_collection.insert_one({
+        "question": question,
+        "options": options
+    })
+
+    return jsonify({"message": "Feedback question added successfully."}), 201
+
+@admin_bp.route("/delete_feedback_question/<question_id>", methods=["DELETE"])
+def delete_feedback_question(question_id):
+    result = questions_collection.delete_one({"_id": question_id})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Question not found."}), 404
+
+    return jsonify({"message": "Feedback question deleted successfully."}), 200
+
+
+
+
+
 
 
 @admin_bp.route("/logout", methods=["POST"])
