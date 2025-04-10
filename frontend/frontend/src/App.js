@@ -4,6 +4,7 @@
 
   import AdminLogin from './components/admin/admin_login';
   import AdminDashboard from './components/admin/admin_dashboard';
+  import FeedbackManagement from './components/admin/AdminQuestions';
   
   import UserLogin from './components/user/user_login';
   import UserDashboard from './components/user/user_dashboard';
@@ -15,6 +16,7 @@
         <Routes>
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/questions" element={<FeedbackManagement />} />
 
           <Route path="/" element={<UserLogin />} />
           <Route path="/faadback_entry" element={<UserDashboard />} />
