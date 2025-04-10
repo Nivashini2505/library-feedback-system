@@ -1,168 +1,154 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import AdminNavbar from './AdminNavbar'; // Import the AdminNavbar
+import React, { useState } from 'react';
 
-function FeedbackManagement() {
-  const [questions, setQuestions] = useState([]);
-  const [newQuestion, setNewQuestion] = useState('');
-  const [newOptions, setNewOptions] = useState(['', '', '', '', '']); // 5 options
+function LibraryFeedbackForm() {
+  const [answers, setAnswers] = useState({ q1: '', q2: '' });
+  const [otherInputs, setOtherInputs] = useState({ q1: '', q2: '' });
 
-  useEffect(() => {
-    fetchFeedbackQuestions();
-  }, []);
-
-  const fetchFeedbackQuestions = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/admin/get_feedback_questions');
-      setQuestions(response.data);
-    } catch (error) {
-      console.error('Error fetching feedback questions:', error);
-    }
+  const handleOptionChange = (question, value) => {
+    setAnswers((prev) => ({ ...prev, [question]: value }));
   };
 
-  const handleAddQuestion = async () => {
-    try {
-      await axios.post('http://localhost:5000/admin/add_feedback_questions', {
-        question: newQuestion,
-        options: newOptions,
-      });
-      setNewQuestion('');
-      setNewOptions(['', '', '', '', '']);
-      fetchFeedbackQuestions(); // Refresh the list
-    } catch (error) {
-      console.error('Error adding feedback question:', error);
-    }
-  };
-
-  const handleDeleteQuestion = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/admin/delete_feedback_question/${id}`);
-      fetchFeedbackQuestions(); // Refresh the list
-    } catch (error) {
-      console.error('Error deleting feedback question:', error);
-    }
+  const handleOtherInputChange = (question, value) => {
+    setOtherInputs((prev) => ({ ...prev, [question]: value }));
   };
 
   return (
     <div style={styles.container}>
-      <AdminNavbar /> {/* Include the Admin Navbar */}
-      <h2 style={styles.title}>Manage Feedback Questions</h2>
-      <div style={styles.addQuestionContainer}>
-        <h3 style={styles.subtitle}>Add New Question</h3>
-        <input
-          type="text"
-          value={newQuestion}
-          onChange={(e) => setNewQuestion(e.target.value)}
-          placeholder="Enter question"
-          style={styles.input}
-        />
-        {newOptions.map((option, index) => (
+      <h2 style={styles.heading}>GRD Library Floor 3 Feedback</h2>
+
+      {/* Question 1 */}
+      <div style={styles.questionBlock}>
+        <p style={styles.question}>1) Which facility do you think should be improved the most?</p>
+        {[
+          'A. Book availability',
+          'B. Digital resources',
+          'C. Study spaces',
+          'D. Noise control',
+        ].map((opt, idx) => (
+          <label key={idx} style={styles.optionLabel}>
+            <input
+              type="radio"
+              name="q1"
+              value={opt}
+              checked={answers.q1 === opt}
+              onChange={() => handleOptionChange('q1', opt)}
+            />
+            {opt}
+          </label>
+        ))}
+
+        <label style={styles.optionLabel}>
           <input
-            key={index}
-            type="text"
-            value={option}
-            onChange={(e) => {
-              const updatedOptions = [...newOptions];
-              updatedOptions[index] = e.target.value;
-              setNewOptions(updatedOptions);
-            }}
-            placeholder={`Option ${index + 1}`}
-            style={styles.input}
+            type="radio"
+            name="q1"
+            value="E. Other"
+            checked={answers.q1 === 'E. Other'}
+            onChange={() => handleOptionChange('q1', 'E. Other')}
           />
-        ))}
-        <button onClick={handleAddQuestion} style={styles.button}>Add Question</button>
+          E. Other
+          {answers.q1 === 'E. Other' && (
+            <input
+              type="text"
+              placeholder="Write your response"
+              value={otherInputs.q1}
+              onChange={(e) => handleOtherInputChange('q1', e.target.value)}
+              style={styles.blankLineInput}
+            />
+          )}
+        </label>
       </div>
-      <h3 style={styles.subtitle}>Existing Questions</h3>
-      <ul style={styles.questionList}>
-        {questions.map((q) => (
-          <li key={q.id} style={styles.questionItem}>
-            <div>
-              <strong>{q.question}</strong>
-              <ul style={styles.optionsList}>
-                {q.options.map((option, index) => (
-                  <li key={index} style={styles.optionItem}>{option}</li>
-                ))}
-              </ul>
-            </div>
-            <button onClick={() => handleDeleteQuestion(q.id)} style={styles.deleteButton}>Delete</button>
-          </li>
+
+      {/* Question 2 */}
+      <div style={styles.questionBlock}>
+        <p style={styles.question}>
+          2) Have you ever needed assistance from the library staff but couldn’t find them or felt they were unavailable?
+        </p>
+        {[
+          'A. Yes, frequently',
+          'B. Yes, sometimes',
+          'C. Rarely',
+          'D. I’ve never needed assistance',
+        ].map((opt, idx) => (
+          <label key={idx} style={styles.optionLabel}>
+            <input
+              type="radio"
+              name="q2"
+              value={opt}
+              checked={answers.q2 === opt}
+              onChange={() => handleOptionChange('q2', opt)}
+            />
+            {opt}
+          </label>
         ))}
-      </ul>
+
+        <label style={styles.optionLabel}>
+          <input
+            type="radio"
+            name="q2"
+            value="E. Other"
+            checked={answers.q2 === 'E. Other'}
+            onChange={() => handleOptionChange('q2', 'E. Other')}
+          />
+          E. Other
+          {answers.q2 === 'E. Other' && (
+            <input
+              type="text"
+              placeholder="Write your response"
+              value={otherInputs.q2}
+              onChange={(e) => handleOtherInputChange('q2', e.target.value)}
+              style={styles.blankLineInput}
+            />
+          )}
+        </label>
+      </div>
     </div>
   );
 }
 
 const styles = {
   container: {
+    maxWidth: '700px',
+    margin: '40px auto',
     padding: '20px',
-    backgroundColor: '#f4f4f4',
-    minHeight: '100vh',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+    fontFamily: 'Arial, sans-serif',
   },
-  title: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '20px',
+  heading: {
+    textAlign: 'center',
+    marginBottom: '30px',
+    fontSize: '28px',
+    color: '#2c3e50',
   },
-  subtitle: {
-    fontSize: '20px',
+  questionBlock: {
+    marginBottom: '30px',
+  },
+  question: {
+    fontSize: '18px',
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: '10px',
+    color: '#34495e',
   },
-  addQuestionContainer: {
-    marginBottom: '20px',
-    padding: '15px',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
-  },
-  input: {
-    padding: '10px',
+  optionLabel: {
+    display: 'block',
+    marginBottom: '14px',
     fontSize: '16px',
-    width: '100%',
-    marginBottom: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
+    color: '#555',
   },
-  button: {
-    padding: '10px 15px',
-    backgroundColor: '#4A90E2',
-    color: 'white',
+  blankLineInput: {
+    display: 'block',
+    marginTop: '10px',
+    width: '80%',
+    maxWidth: '400px',
     border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s',
-  },
-  questionList: {
-    listStyleType: 'none',
-    padding: 0,
-  },
-  questionItem: {
-    padding: '10px',
-    backgroundColor: 'white',
-    borderRadius: '5px',
-    marginBottom: '10px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-  },
-  optionsList: {
-    listStyleType: 'none',
-    padding: '5px 0 0 20px', // Indent options
-  },
-  optionItem: {
-    marginBottom: '5px',
-  },
-  deleteButton: {
-    padding: '5px 10px',
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
+    borderBottom: '2px solid #aaa',
+    fontSize: '16px',
+    padding: '6px 0',
+    outline: 'none',
+    backgroundColor: 'transparent',
+    color: '#333',
   },
 };
 
-export default FeedbackManagement;
+export default LibraryFeedbackForm;
